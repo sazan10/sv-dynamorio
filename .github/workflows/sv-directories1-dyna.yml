@@ -22,8 +22,6 @@ jobs:
         if: runner.os == 'Linux'
         run: wget -P /tmp/ https://github.com/DynamoRIO/dynamorio/releases/download/cronbuild-10.91.19860/DynamoRIO-Linux-10.91.19860.tar.gz && tar -xzf /tmp/DynamoRIO-Linux-10.91.19860.tar.gz -C /tmp/
 
-
-
       - name: Compile codes 
         run: |
           
