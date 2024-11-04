@@ -23,8 +23,7 @@ jobs:
         run: |
           wget https://github.com/DynamoRIO/dynamorio/releases/download/cronbuild-10.91.19860/DynamoRIO-Linux-10.91.19860.tar.gz
           tar -xvzf DynamoRIO-Linux-10.91.19860.tar.gz
-          export DYNAMORIO_HOME=$PWD/DynamoRIO-Linux-10.91.19860
-          export PATH=$PATH:$DYNAMORIO_HOME/bin64
+
 
       - name: Compile codes 
         run: |
@@ -74,7 +73,7 @@ jobs:
             local basename=$(basename "$executable")
             mkdir -p ./dyna_logs/$dirname/$basename/
             echo "dirname: $dirname, basename: $basename, $executable"
-            timeout 10s  $DYNAMORIO_HOME/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -- "$executable"
+            timeout 10s  $DYNAMORIO_HOME/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -t drmemtrace -- "$executable" > "./dyna_logs/$dirname/$basename/$2.log"
             local exit_status=$?
           }
           find . -type f -executable | while read -r file; do
