@@ -21,7 +21,7 @@ jobs:
       - name: Install Dynamorio dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          wget https://github.com/DynamoRIO/dynamorio/releases/download/cronbuild-10.91.19860/DynamoRIO-Linux-10.91.19860.tar.gz 2>&1
+          wget https://github.com/DynamoRIO/dynamorio/releases/download/cronbuild-10.91.19860/DynamoRIO-Linux-10.91.19860.tar.gz 
           tar -xvzf DynamoRIO-Linux-10.91.19860.tar.gz
 
 
@@ -73,7 +73,7 @@ jobs:
             local basename=$(basename "$executable")
             mkdir -p ./dyna_logs/$dirname/$basename/
             echo "dirname: $dirname, basename: $basename, $executable"
-            timeout 10s  $DYNAMORIO_HOME/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -t drmemtrace -- "$executable" > "./dyna_logs/$dirname/$basename/$2.log"
+            timeout 10s  $DYNAMORIO_HOME/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -t drmemtrace -- "$executable" > "./dyna_logs/$dirname/$basename/$2.log" 2>&1
             local exit_status=$?
           }
           find . -type f -executable | while read -r file; do
