@@ -1,0 +1,89 @@
+name: sv-directories5-dyna
+on:
+  push:
+jobs:
+  run-dyna:
+    name: '${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2 
+      - name: Install dependencies for project (Linux)
+        if: runner.os == 'Linux'
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y autotools-dev automake libevent-dev
+          sudo apt-get install -y libunwind8
+          
+      - name: Install Dynamorio dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget https://github.com/DynamoRIO/dynamorio/releases/download/cronbuild-10.91.19860/DynamoRIO-Linux-10.91.19860.tar.gz 
+          tar -xvzf DynamoRIO-Linux-10.91.19860.tar.gz
+      - name: Compile codes 
+        run: |
+          
+          set +e
+          git clone https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
+          cd sv-benchmarks/c
+          mkdir -p drmem_logs
+          DIR_FILE="../../directories5.txt"
+          read -r -a dirs < "$DIR_FILE"
+          for dir in "${dirs[@]}"; do
+              # Check if the directory exists
+              if [ -d "$dir" ]; then
+                  # Find all .c files in the directory
+                  for file in $(find "$dir" -type f -name "*.c"); do
+                      # Get the base name of the file (without extension)
+                      base_name=$(basename "$file" .c)
+                      dirname=$(dirname "$file" ) 
+                      # Compile the file to an object file in the output directory
+                      echo "Compiling $file..."
+                      echo "Directory name: $dirname/$base_name"
+                      gcc -g "$file" -o "$dirname/$base_name"
+                      # Check if the compilation succeeded
+                      if [ $? -ne 0 ]; then
+                          echo "Error compiling $file. Exiting."
+                          echo "Error compiling $file." >> "$ERROR_LOG"
+                      else
+                         	# Log the successfully compiled file and its directory
+                          echo "Successfully compiled: $file -> $dirname/$base_name" >> "$LOG_FILE"
+                      fi
+                  done
+              else
+                  echo "Directory $dir does not exist. Skipping."
+              fi
+          done 
+          is_executable() {
+            local file="$1"
+            if file "$file" | grep -q 'ELF 64-bit'; then
+              return 0
+            else
+              return 1
+            fi
+          }
+          run_with_dynamorio() {
+            local executable="$1"
+            local dirname=$(dirname "$executable" | sed 's|^\./||')
+            local basename=$(basename "$executable")
+            mkdir -p ./dyna_logs/$dirname/$basename/
+            echo "dirname: $dirname, basename: $basename, $executable"
+            timeout 10s  $DYNAMORIO_HOME/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -t drmemtrace -- "$executable" > "./dyna_logs/$dirname/$basename/$2.log" 2>&1
+            local exit_status=$?
+          }
+          find . -type f -executable | while read -r file; do
+            if is_executable "$file"; then
+              for i in {1..10}; do
+                echo "Executing $file: Iteration No: $i"
+                run_with_dynamorio "$file" $i              
+              done
+            fi
+          done
+      - name: Upload dynamorio reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dynamorio-report
+          path: './sv-benchmarks/c/dyna_logs/*'
