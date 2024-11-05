@@ -69,7 +69,7 @@ jobs:
             local basename=$(basename "$executable")
             mkdir -p "./dyna_logs/$dirname/$basename/"
             echo "dirname: $dirname, basename: $basename, $executable"
-            timeout 10s /tmp/DynamoRIO-Linux-10.91.19860/bin64/drrun -logdir "./dyna_logs/$dirname/$basename/" -t drmemtrace -- "$executable" 
+            timeout 10s /tmp/DynamoRIO-Linux-10.91.19860/bin64/drrun -t drmemtrace -- "$executable" 
             #echo "Saving log to ./dyna_logs/$dirname/$basename/$2.log"
             #ls ./dyna_logs/$dirname/$basename
             #cat "./dyna_logs/$dirname/$basename/$2.log"
